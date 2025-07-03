@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador de Energia Solar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f7f7f7;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #007b5f;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+    }
+    button {
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #calcular { background-color: #28a745; color: white; }
+    #pdf { background-color: #007bff; color: white; }
+    #whatsapp { background-color: #25D366; color: white; }
+    .result {
+      margin-top: 30px;
+      padding: 15px;
+      background: #e6ffe6;
+      border: 1px solid #b2f0b2;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Simulador Solar Gratuito</h2>
+
+  <label for="consumo">Consumo mensal (kWh):</label>
+  <input id="consumo" type="number" placeholder="Ex: 450">
+
+  <label for="tarifa">Tarifa de energia (R$/kWh):</label>
+  <input id="tarifa" type="number" value="0.8" step="0.01">
+
+  <button id="calcular" onclick="calcular()">Calcular Orçamento</button>
+
+  <div class="result" id="resultado" style="display:none;"></div>
+
+  <button id="pdf" style="display:none;" onclick="exportarPDF()">Exportar para PDF</button>
+  <button id="whatsapp" style="display:none;" onclick="enviarWhatsApp()">Enviar pelo WhatsApp</button>
+
+  <script>
+    let resultadoTexto = "";
+
+    function calcular() {
+      const consumo = parseFloat(document.getElementById('consumo').value);
+      const tarifa = parseFloat(document.getElementById('tarifa').value);
+
+      if (isNaN(consumo) || isNaN(tarifa)) {
+        alert("Por favor, preencha todos os campos corretamente.");
+        return;
+      }
+
+      const irradiacao = 4;
+      const eficiencia = 0.8;
+      const precoWp = 5.5;
+      const potenciaPainel = 550;
+
+      const kWpNecessario = consumo / (30 * irradiacao * eficiencia);
+      const numPaineis = Math.ceil((kWpNecessario * 1000) / potenciaPainel);
+      const custoTotal = kWpNecessario * 1000 * precoWp;
+      const economiaMensal = consumo * tarifa * 0.95;
+      const payback = custoTotal / economiaMensal;
+
+      resultadoTexto = `
+        Potência necessária: ${kWpNecessario.toFixed(2)} kWp\n
+        Número de painéis (550W): ${numPaineis}\n
+        Custo estimado total: R$ ${custoTotal.toFixed(2)}\n
+        Economia mensal: R$ ${economiaMensal.toFixed(2)}\n
+        Tempo de retorno: ${payback.toFixed(1)} meses
+      `;
+
+      document.getElementById('resultado').innerHTML = `
+        <h3>Resultado da Simulação</h3>
+        <p><strong>Potência necessária:</strong> ${kWpNecessario.toFixed(2)} kWp</p>
+        <p><strong>Número de painéis (550W):</strong> ${numPaineis}</p>
+        <p><strong>Custo estimado total:</strong> R$ ${custoTotal.toFixed(2)}</p>
+        <p><strong>Economia mensal:</strong> R$ ${economiaMensal.toFixed(2)}</p>
+        <p><strong>Tempo de retorno:</strong> ${payback.toFixed(1)} meses</p>
+      `;
+      document.getElementById('resultado').style.display = 'block';
+      document.getElementById('pdf').style.display = 'inline-block';
+      document.getElementById('whatsapp').style.display = 'inline-block';
+    }
+
+    async function exportarPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.text("Simulação de Energia Solar", 10, 10);
+      doc.text(resultadoTexto, 10, 20);
+
+      doc.save("simulacao-solar.pdf");
+    }
+
+    function enviarWhatsApp() {
+      const textoWhatsApp = encodeURIComponent("Resultado da simulação de energia solar:\n\n" + resultadoTexto);
+      const url = `https://wa.me/?text=${textoWhatsApp}`;
+      window.open(url, "_blank");
+    }
+  </script>
+
+</body>
+</html>
